@@ -6,7 +6,7 @@ import pandas as pd
 # -------------------------------------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv(r".\data\vgsales_clean.csv")
+    df = pd.read_csv(r"data\vgsales_clean.csv")
     df["Year_of_Release"] = pd.to_numeric(df["Year_of_Release"], errors="coerce")
     df["User_Score"] = pd.to_numeric(df["User_Score"], errors="coerce")
     df["Is_Hit"] = (df["Global_Sales"] >= 1.0).astype(int)
