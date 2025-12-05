@@ -7,27 +7,8 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# ---------------------------------------------
-# Inizializzazione df se non presente in session_state
-# ---------------------------------------------
-if "df" not in st.session_state:
-    @st.cache_data
-    def load_data_fallback():
-        df = pd.read_csv(r".\data\vgsales_clean.csv")
-        df["Year_of_Release"] = pd.to_numeric(df["Year_of_Release"], errors="coerce")
-        df["User_Score"] = pd.to_numeric(df["User_Score"], errors="coerce")
-        df["Is_Hit"] = (df["Global_Sales"] >= 1.0).astype(int)
-        return df
-
-    st.session_state["df"] = load_data_fallback()
-
 df = st.session_state["df"]
 
-
-
-
-
-# Filtro solo i record i utili
 df_scores = df.dropna(subset=["Global_Sales", "Critic_Score", "User_Score"])
 
 # Gestione  NaN 
@@ -35,8 +16,6 @@ years = df_scores["Year_of_Release"].dropna()
 if len(years) > 0:
     year_min = int(years.min())
     year_max = int(years.max())
-else:
-    year_min, year_max = 2000, 2020  
 
 
 # FILTRI 
@@ -109,7 +88,6 @@ Ogni punto rappresenta un gioco.
 L’obiettivo è capire se un metascore alto si traduce in più copie vendute.
 """)
 
-# Per evitare che pochi outlier schiaccino il grafico:
 sales_cap = st.slider(
     "Limite massimo vendite da visualizzare (milioni di copie)",
     min_value=1,
@@ -173,91 +151,7 @@ st.caption("""
 st.markdown("---")
 
 
-# 3) BUCKET DI SCORE E PROBABILITÀ DI HIT
-
-st.subheader(" Quanto aumentano le chance di HIT con buone recensioni?")
-
-st.markdown("""
-Qui raggruppiamo i giochi in fasce di valutazione e misuriamo la probabilità di HIT
-(≥ 1M copie) in ciascuna fascia.
-""")
-
-# Se Is_Hit non fosse presente per qualche motivo, lo ricreiamo
-if "Is_Hit" not in df_filtered.columns:
-    df_filtered["Is_Hit"] = (df_filtered["Global_Sales"] >= 1.0).astype(int)
-
-def bucket_user(score):
-    if pd.isna(score):
-        return np.nan
-    if score < 6:
-        return "Bassa (<6)"
-    elif score < 8:
-        return "Media (6-8)"
-    else:
-        return "Alta (8-10)"
-
-def bucket_critic(score):
-    if pd.isna(score):
-        return np.nan
-    if score < 60:
-        return "Bassa (<60)"
-    elif score < 80:
-        return "Media (60-80)"
-    else:
-        return "Alta (80-100)"
-
-df_buckets = df_filtered.copy()
-df_buckets["Fascia_User_Score"] = df_buckets["User_Score"].apply(bucket_user)
-df_buckets["Fascia_Critic_Score"] = df_buckets["Critic_Score"].apply(bucket_critic)
-
-# Probabilità di HIT per fascia User Score
-hit_by_user_bucket = (
-    df_buckets.dropna(subset=["Fascia_User_Score"])
-    .groupby("Fascia_User_Score")["Is_Hit"]
-    .mean()
-    .reindex(["Bassa (<6)", "Media (6-8)", "Alta (8-10)"])
-    * 100
-)
-
-# Probabilità di HIT per fascia Critic Score
-hit_by_critic_bucket = (
-    df_buckets.dropna(subset=["Fascia_Critic_Score"])
-    .groupby("Fascia_Critic_Score")["Is_Hit"]
-    .mean()
-    .reindex(["Bassa (<60)", "Media (60-80)", "Alta (80-100)"])
-    * 100
-)
-
-col_u, col_c = st.columns(2)
-
-with col_u:
-    fig_hit_user = px.bar(
-        hit_by_user_bucket.dropna().reset_index(),
-        x="Fascia_User_Score",
-        y="Is_Hit",
-        labels={"Fascia_User_Score": "Fascia User Score", "Is_Hit": "% HIT"},
-        title="Probabilità di HIT per fascia User Score"
-    )
-    st.plotly_chart(fig_hit_user, use_container_width=True)
-
-with col_c:
-    fig_hit_critic = px.bar(
-        hit_by_critic_bucket.dropna().reset_index(),
-        x="Fascia_Critic_Score",
-        y="Is_Hit",
-        labels={"Fascia_Critic_Score": "Fascia Critic Score", "Is_Hit": "% HIT"},
-        title="Probabilità di HIT per fascia Critic Score"
-    )
-    st.plotly_chart(fig_hit_critic, use_container_width=True)
-
-st.caption("""
- Questi grafici rispondono direttamente alla domanda:
-quanto aumenta la probabilità di successo commerciale se il gioco supera certe soglie di valutazione?
-""")
-
-st.markdown("---")
-
-# 4) RATING ESRB vs VENDITE
+# 3) RATING ESRB vs VENDITE
 
 st.subheader(" Rating ESRB e vendite: quali fasce di pubblico sono più profittevoli?")
 
