@@ -5,7 +5,7 @@ import pandas as pd
 st.title("Analisi Piattaforme e Generi")
 
 df = st.session_state["df"]
-
+    
 st.write("""
 In questa pagina analizziamo **come si sono evolute le piattaforme e i generi** nel corso del tempo.
 I grafici sono filtrati sulle categorie più rilevanti per rendere l'analisi immediata.
