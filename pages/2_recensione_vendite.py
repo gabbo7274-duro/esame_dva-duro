@@ -2,38 +2,46 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.express as px
 
-st.title("⭐ Recensioni & impatto sulle vendite")
+# ---------------------------------------------
+# Inizializzazione df se non presente in session_state
+# ---------------------------------------------
+if "df" not in st.session_state:
+    @st.cache_data
+    def load_data_fallback():
+        df = pd.read_csv(r".\data\vgsales_clean.csv")
+        df["Year_of_Release"] = pd.to_numeric(df["Year_of_Release"], errors="coerce")
+        df["User_Score"] = pd.to_numeric(df["User_Score"], errors="coerce")
+        df["Is_Hit"] = (df["Global_Sales"] >= 1.0).astype(int)
+        return df
 
-st.markdown("""
-Questa pagina risponde alla domanda:
+    st.session_state["df"] = load_data_fallback()
 
-> **Quanto contano le recensioni (critica & utenti) e il rating ESRB sul successo commerciale di un gioco?**
-
-I grafici e gli indicatori sotto aiutano il management a capire **se conviene investire in qualità critica/
-user experience** oppure spingere solo su marketing e IP esistenti.
-""")
-
-# -------------------------------------------------------
-# DATI DI LAVORO
-# -------------------------------------------------------
 df = st.session_state["df"]
 
-# Filtriamo solo i record con informazioni utili
+
+
+
+
+# Filtro solo i record i utili
 df_scores = df.dropna(subset=["Global_Sales", "Critic_Score", "User_Score"])
 
-# Gestione anni (rimuovo NaN sugli anni per i filtri)
+# Gestione  NaN 
 years = df_scores["Year_of_Release"].dropna()
 if len(years) > 0:
     year_min = int(years.min())
     year_max = int(years.max())
 else:
-    year_min, year_max = 2000, 2020  # fallback
+    year_min, year_max = 2000, 2020  
 
-# -------------------------------------------------------
-# FILTRI EXECUTIVE-FRIENDLY
-# -------------------------------------------------------
-st.sidebar.markdown("### 🔎 Filtri pagina recensioni")
+
+# FILTRI 
+
+st.sidebar.markdown(" Filtri pagina recensioni")
 year_range = st.sidebar.slider(
     "Anno di uscita",
     min_value=year_min,
@@ -67,47 +75,38 @@ if platform_filter:
 if genre_filter:
     df_filtered = df_filtered[df_filtered["Genre"].isin(genre_filter)]
 
-st.caption(f"Giochi considerati nel filtro corrente: **{len(df_filtered)}**")
+#st.caption(f"Giochi considerati nel filtro corrente: **{len(df_filtered)}**")
 
-# -------------------------------------------------------
-# KPI PRINCIPALI: CORRELAZIONE RECENSIONI vs VENDITE
-# -------------------------------------------------------
-col1, col2, col3 = st.columns(3)
 
-if len(df_filtered) > 10:
-    corr_critic = df_filtered["Critic_Score"].corr(df_filtered["Global_Sales"])
-    corr_user = df_filtered["User_Score"].corr(df_filtered["Global_Sales"])
 
-    # Probabilità media di HIT (Is_Hit viene creato in app.py)
-    if "Is_Hit" in df_filtered.columns:
-        hit_rate = df_filtered["Is_Hit"].mean()
-    else:
-        hit_rate = (df_filtered["Global_Sales"] >= 1.0).mean()
 
-    col1.metric("Correlazione Critic Score / vendite", f"{corr_critic:.2f}")
-    col2.metric("Correlazione User Score / vendite", f"{corr_user:.2f}")
-    col3.metric("Quota HIT nel campione", f"{hit_rate*100:.1f}%")
-else:
-    col1.write("Dataset troppo piccolo per KPI affidabili.")
-    col2.empty()
-    col3.empty()
+st.title(" Recensioni & impatto sulle vendite")
 
 st.markdown("""
-💡 **Lettura veloce**  
-- Valori vicini a **0.5–0.7** indicano una relazione forte: i giochi con valutazioni alte vendono sensibilmente di più.  
-- Valori vicini a **0** indicano che la recensione pesa poco rispetto ad altri driver (brand, marketing, piattaforma, IP, ecc.).
+In questa sezione analizziamo quanto le recensioni  sia della critica che degli utenti influenzano le vendite di un videogioco.
+
+
+
+ Un gioco con buone recensioni vende davvero di più?
+
+Qui sotto esploriamo il rapporto tra valutazioni e performance commerciali, possiamo  osservare:
+- come cambiano le vendite al variare del Critic Score  
+- quanto conta il User Score nel passaparola e nelle vendite  
+- come la qualità percepita si riflette nella probabilità che un gioco diventi un HIT
+
+
 """)
 
 st.markdown("---")
 
-# -------------------------------------------------------
+
 # 1) CRITIC SCORE vs GLOBAL SALES
-# -------------------------------------------------------
-st.subheader("1️⃣ Critica professionale vs vendite globali")
+
+st.subheader(" Critica professionale vs vendite globali")
 
 st.markdown("""
 Ogni punto rappresenta un gioco.  
-L’obiettivo è capire se **un metascore alto** si traduce in **più copie vendute**.
+L’obiettivo è capire se un metascore alto si traduce in più copie vendute.
 """)
 
 # Per evitare che pochi outlier schiaccino il grafico:
@@ -136,18 +135,18 @@ fig_critic = px.scatter(
 st.plotly_chart(fig_critic, use_container_width=True)
 
 st.caption("""
-📌 Se la nuvola di punti e la retta di trend sono **crescente**, i giochi con voti migliori dalla critica tendono a vendere di più.
+ Se la nuvola di punti e la retta di trend sono crescente, i giochi con voti migliori dalla critica tendono a vendere di più.
 """)
 
-st.markdown("---")
 
-# -------------------------------------------------------
+
+
 # 2) USER SCORE vs GLOBAL SALES
-# -------------------------------------------------------
-st.subheader("2️⃣ Valutazioni utenti vs vendite globali")
+
+st.subheader(" Valutazioni utenti vs vendite globali")
 
 st.markdown("""
-Qui analizziamo se il **passaparola degli utenti** (user score) è allineato o meno all’andamento delle vendite.
+Qui analizziamo se il passaparola degli utenti (user score) è allineato o meno all’andamento delle vendite.
 """)
 
 df_plot_user = df_filtered[df_filtered["Global_Sales"] <= sales_cap]
@@ -168,19 +167,18 @@ fig_user = px.scatter(
 st.plotly_chart(fig_user, use_container_width=True)
 
 st.caption("""
-📌 Un trend **crescente** suggerisce che giochi apprezzati dagli utenti generano più vendite
-(o mantengono vendite solide grazie al passaparola).
+ Un trend crescente suggerisce che giochi apprezzati dagli utenti generano più vendite.
 """)
 
 st.markdown("---")
 
-# -------------------------------------------------------
+
 # 3) BUCKET DI SCORE E PROBABILITÀ DI HIT
-# -------------------------------------------------------
-st.subheader("3️⃣ Quanto aumentano le chance di HIT con buone recensioni?")
+
+st.subheader(" Quanto aumentano le chance di HIT con buone recensioni?")
 
 st.markdown("""
-Qui raggruppiamo i giochi in **fasce di valutazione** e misuriamo la **probabilità di HIT**
+Qui raggruppiamo i giochi in fasce di valutazione e misuriamo la probabilità di HIT
 (≥ 1M copie) in ciascuna fascia.
 """)
 
@@ -253,16 +251,15 @@ with col_c:
     st.plotly_chart(fig_hit_critic, use_container_width=True)
 
 st.caption("""
-📌 Questi grafici rispondono in modo diretto al management:
-**quanto aumenta la probabilità di successo commerciale se il gioco supera certe soglie di valutazione?**
+ Questi grafici rispondono direttamente alla domanda:
+quanto aumenta la probabilità di successo commerciale se il gioco supera certe soglie di valutazione?
 """)
 
 st.markdown("---")
 
-# -------------------------------------------------------
 # 4) RATING ESRB vs VENDITE
-# -------------------------------------------------------
-st.subheader("4️⃣ Rating ESRB e vendite: quali fasce di pubblico sono più profittevoli?")
+
+st.subheader(" Rating ESRB e vendite: quali fasce di pubblico sono più profittevoli?")
 
 if "Rating" in df_filtered.columns:
     df_rating = (
@@ -291,8 +288,8 @@ if "Rating" in df_filtered.columns:
     st.plotly_chart(fig_rating, use_container_width=True)
 
     st.caption("""
-    📌 Questa vista aiuta a capire **quali fasce di età (E, T, M, …)** generano più vendite complessive,
-    tenendo conto anche di **quanti titoli** abbiamo pubblicato per ogni rating.
+     Questa vista aiuta a capire quali fasce di età (E, T, M, …) generano più vendite complessive,
+    tenendo conto anche di quanti titoli abbiano pubblicato per ogni rating.
     """)
 else:
     st.info("Il campo 'Rating' non è disponibile nel dataset filtrato.")
