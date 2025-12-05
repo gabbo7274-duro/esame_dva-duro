@@ -2,7 +2,7 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 
-st.title("📊 Analisi Piattaforme e Generi")
+st.title("Analisi Piattaforme e Generi")
 
 df = st.session_state["df"]
 
@@ -13,7 +13,7 @@ I grafici sono filtrati sulle categorie più rilevanti per rendere l'analisi imm
 
 
 metric = st.selectbox(
-    "📈 Scegli la metrica di vendita",
+    "Scegli la metrica di vendita",
     ["Global_Sales", "NA_Sales", "EU_Sales", "JP_Sales", "Other_Sales"]
 )
 
@@ -24,7 +24,7 @@ with col2:
     top_n_genres = st.slider("Quanti generi mostrare?", 3, 12, 8)
 
 
-st.subheader("🏆 Piattaforme e Generi più venduti (classifica totale)")
+st.subheader("Piattaforme e Generi più venduti (classifica totale)")
 
 col1, col2 = st.columns(2)
 
@@ -44,7 +44,7 @@ with col1:
     st.plotly_chart(fig_top_plat, use_container_width=True)
 
     best_platform = top_platforms.iloc[0]
-    st.info(f"💡 La piattaforma più performante è **{best_platform['Platform']}** con {best_platform[metric]:,.1f} milioni di copie vendute.")
+    st.info(f"La piattaforma più performante è **{best_platform['Platform']}** con {best_platform[metric]:,.1f} milioni di copie vendute.")
 
 with col2:
     top_genres = (
@@ -62,10 +62,10 @@ with col2:
     st.plotly_chart(fig_top_gen, use_container_width=True)
 
     best_genre = top_genres.iloc[0]
-    st.info(f"💡 Il genere più venduto è **{best_genre['Genre']}** con {best_genre[metric]:,.1f} milioni di copie vendute.")
+    st.info(f"Il genere più venduto è **{best_genre['Genre']}** con {best_genre[metric]:,.1f} milioni di copie vendute.")
 
 
-st.subheader("📅 Vendite nel tempo per piattaforma")
+st.subheader("Vendite nel tempo per piattaforma")
 
 df_platform = (
     df[df["Platform"].isin(top_platforms["Platform"])]
@@ -87,10 +87,10 @@ fig1.update_layout(legend_title_text="Piattaforma")
 st.plotly_chart(fig1, use_container_width=True)
 
 trend_platform = df_platform.groupby("Platform")[metric].sum().idxmax()
-st.info(f"📈 La piattaforma con la crescita complessiva maggiore nel periodo analizzato è **{trend_platform}**.")
+st.info(f"La piattaforma con la crescita complessiva maggiore nel periodo analizzato è **{trend_platform}**.")
 
 
-st.subheader("🎭 Vendite nel tempo per genere")
+st.subheader("Vendite nel tempo per genere")
 
 df_genre = (
     df[df["Genre"].isin(top_genres["Genre"])]
@@ -112,6 +112,6 @@ fig2.update_layout(legend_title_text="Genere")
 st.plotly_chart(fig2, use_container_width=True)
 
 trend_genre = df_genre.groupby("Genre")[metric].sum().idxmax()
-st.info(f"📈 Il genere con la crescita complessiva maggiore nel periodo analizzato è **{trend_genre}**.")
+st.info(f"Il genere con la crescita complessiva maggiore nel periodo analizzato è **{trend_genre}**.")
 
 st.success("Analisi completata! Puoi cambiare metrica e numero di categorie dai filtri sopra per generare insight immediati.")
