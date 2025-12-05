@@ -8,7 +8,7 @@ df = st.session_state["df"]
 
 st.write("""
 In questa pagina analizziamo **come si sono evolute le piattaforme e i generi** nel corso del tempo.
-Per evitare grafici confusionari, puoi filtrare i risultati sulle piattaforme e sui generi più rilevanti.
+I grafici sono filtrati sulle categorie più rilevanti per rendere l'analisi immediata.
 """)
 
 # ------------------- FILTRI -------------------
@@ -20,7 +20,6 @@ metric = st.selectbox(
 
 # Top N piattaforme e generi per rendere i grafici leggibili
 col1, col2 = st.columns(2)
-
 with col1:
     top_n_platforms = st.slider("Quante piattaforme mostrare?", 3, 15, 7)
 with col2:
@@ -47,6 +46,10 @@ with col1:
     fig_top_plat.update_traces(textposition="outside")
     st.plotly_chart(fig_top_plat, use_container_width=True)
 
+    # Insight automatico
+    best_platform = top_platforms.iloc[0]
+    st.info(f"💡 La piattaforma più performante è **{best_platform['Platform']}** con {best_platform[metric]:,.1f} milioni di copie vendute.")
+
 with col2:
     top_genres = (
         df.groupby("Genre")[metric]
@@ -61,6 +64,10 @@ with col2:
     )
     fig_top_gen.update_traces(textposition="outside")
     st.plotly_chart(fig_top_gen, use_container_width=True)
+
+    # Insight automatico
+    best_genre = top_genres.iloc[0]
+    st.info(f"💡 Il genere più venduto è **{best_genre['Genre']}** con {best_genre[metric]:,.1f} milioni di copie vendute.")
 
 # ------------------- ANALISI PIATTAFORME NEL TEMPO -------------------
 
@@ -85,6 +92,10 @@ fig1.update_layout(legend_title_text="Piattaforma")
 
 st.plotly_chart(fig1, use_container_width=True)
 
+# Insight automatico per trend
+trend_platform = df_platform.groupby("Platform")[metric].sum().idxmax()
+st.info(f"📈 La piattaforma con la crescita complessiva maggiore nel periodo analizzato è **{trend_platform}**.")
+
 # ------------------- ANALISI GENERI NEL TEMPO -------------------
 
 st.subheader("🎭 Vendite nel tempo per genere")
@@ -108,4 +119,8 @@ fig2.update_layout(legend_title_text="Genere")
 
 st.plotly_chart(fig2, use_container_width=True)
 
-st.success("Analisi completata! Puoi cambiare metrica e numero di categorie dai filtri sopra.")
+# Insight automatico per trend generi
+trend_genre = df_genre.groupby("Genre")[metric].sum().idxmax()
+st.info(f"📈 Il genere con la crescita complessiva maggiore nel periodo analizzato è **{trend_genre}**.")
+
+st.success("Analisi completata! Puoi cambiare metrica e numero di categorie dai filtri sopra per generare insight immediati.")
