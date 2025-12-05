@@ -8,3 +8,6 @@ uvicorn[standard]
 matplotlib
 seaborn
 scikit-learn
+plotly-express
+category_encoders
+xgboost
