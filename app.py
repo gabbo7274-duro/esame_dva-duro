@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# -------------------------------------------------------
-# CARICAMENTO DATASET (CACHE)
-# -------------------------------------------------------
+
 @st.cache_data
 def load_data():
     df = pd.read_csv(r"data\vgsales_clean.csv")
@@ -14,12 +12,9 @@ def load_data():
 
 df = load_data()
 
-# Rendiamo il dataset disponibile a tutte le pagine
 st.session_state["df"] = df
 
-# -------------------------------------------------------
-# HOME PAGE
-# -------------------------------------------------------
+
 st.title("🎮 Videogame Sales Analytics")
 st.subheader("Dashboard multipagina con Streamlit")
 
